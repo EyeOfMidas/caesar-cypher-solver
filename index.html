@@ -1,0 +1,130 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<style type="text/css">
+		#overview {
+			width: 50%;
+			margin: auto;
+			padding: 5px;
+		}
+		#input-wrapper {
+			width: 50%;
+			margin: auto;
+			text-align: center;
+		}
+		#input {
+			width: 100%;
+			height: 300px;
+			margin: 5px;
+		}
+		#decode {
+			width: 100px;
+			height: 40px;
+			margin: 5px;
+		}
+		#output-wrapper {
+			width: 50%;
+			margin: auto;
+		}
+		#confidence, #key, #output {
+			display: inline;
+		}
+
+	</style>
+</head>
+<body>
+	<div id="overview">This tool uses an english dictionary to brute-force decode any Caesar cypher. Simply put in an encoded string and it will compare the results against a dictionary and return the most likely decryption. This is not optimized for long texts and will try to look up every single word before making a guess.</div>
+	<div id="input-wrapper">
+	<textarea id="input">pm ol ohk hufaopun jvumpkluaphs av zhf, ol dyval pa pu jpwoly, aoha pz, if zv johunpun aol vykly vm aol slaalyz vm aol hswohila, aoha uva h dvyk jvbsk il thkl vba.</textarea>
+	<button id="decode" disabled="disabled">Loading</button>
+</div>
+<div id="output-wrapper">
+	<div class="row">
+	<label for="confidence">Confidence:</label> <div id="confidence"></div>
+	</div>
+	<div class="row">
+	<label for="key">Decode Key:</label> <div id="key"></div>
+	</div>
+	<div class="row">
+	<label for="output">Best Decryption:</label> <div id="output"></div>
+	</div>
+</div>
+<script>
+	var dictionary = [];
+	document.addEventListener("DOMContentLoaded", function() {
+		var r = new XMLHttpRequest();
+		r.open("GET", "https://raw.githubusercontent.com/words/an-array-of-english-words/master/words.json", true);
+		r.onreadystatechange = function () {
+			if (r.readyState != 4 || r.status != 200) return;
+			dictionary = JSON.parse(r.responseText);
+			var button = document.getElementById("decode");
+			button.disabled = false;
+			button.innerHTML = "Decode";
+			button.addEventListener("click", readDecodeInput);
+		};
+		r.send();
+	});
+
+	function containsDictionaryWords(decodedInput) {
+		var words = decodedInput.split(" ");
+		var confidence = 0;
+		var successWords = 0;
+		for(var wordIndex in words) {
+			var word = words[wordIndex].replace(/\W/g, '');
+			if(dictionary.indexOf(word) != -1) {
+				successWords++;
+			}
+			if(Number.parseFloat(successWords / words.length).toFixed(2) > 0.8) {
+				break;
+			}
+		}
+		return Number.parseFloat(successWords / words.length).toFixed(2) * 100;
+	}
+
+	function dictionaryDecode(inputText) {
+		var asciiBase = 97;
+		var asciiLimit = 123;
+		var bestConfidence = 0;
+		var bestString = "";
+		var bestKey = "a";
+
+		var alphabet = "abcdefghijklmnopqrstuvwxyz";
+		for(var alphaIndex in alphabet) {
+			
+			var testString = "";
+			for(var inputIndex in inputText) {
+				if(alphabet.indexOf(inputText[inputIndex]) == -1) {
+					testString += inputText[inputIndex];
+					continue;
+				}
+				var codeAlphaBase = inputText.charCodeAt(inputIndex) - asciiBase;
+				var charCode = (codeAlphaBase + parseInt(alphaIndex)) % (asciiLimit - asciiBase);
+				testString += String.fromCharCode(charCode + asciiBase);
+			}
+
+			var confidence = containsDictionaryWords(testString);
+			if(confidence > bestConfidence) {
+				bestKey = alphabet[alphaIndex];
+				bestConfidence = confidence;
+				bestString = testString;
+			}
+		}
+		return {"key": bestKey, "confidence": bestConfidence + "%", "output": bestString};
+	}
+
+	function readDecodeInput() {
+		var inputElement = document.getElementById("input");
+		var inputText = inputElement.value.toLowerCase();
+
+		result = dictionaryDecode(inputText);
+
+		for(var resultKey in result) {
+			var element = document.getElementById(resultKey);
+				element.innerHTML = result[resultKey];
+		}		
+	}
+
+	
+</script>
+</body>
+</html>
