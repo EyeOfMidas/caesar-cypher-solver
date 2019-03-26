@@ -7,5 +7,4 @@ against a dictionary and return the most likely decryption. After
 reaching more than 80% confidence during the dictionary lookup it will 
 stop.
 
-[Try it 
-here!](https://rawgit.com/EyeOfMidas/caesar-cypher-solver/master/index.html)
+[Try it here!](https://eyeofmidas.github.io/caesar-cypher-solver/index.html)
