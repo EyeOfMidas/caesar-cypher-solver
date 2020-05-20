@@ -53,7 +53,7 @@
 	var dictionary = [];
 	document.addEventListener("DOMContentLoaded", function() {
 		var r = new XMLHttpRequest();
-		r.open("GET", "https://raw.githubusercontent.com/words/an-array-of-english-words/master/words.json", true);
+		r.open("GET", "https://raw.githubusercontent.com/words/an-array-of-english-words/master/index.json", true);
 		r.onreadystatechange = function () {
 			if (r.readyState != 4 || r.status != 200) return;
 			dictionary = JSON.parse(r.responseText);
