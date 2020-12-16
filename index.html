@@ -21,10 +21,17 @@
             margin: 5px;
         }
 
-        #decode {
+        .button {
             width: 100px;
             height: 40px;
             margin: 5px;
+        }
+
+        #encodekey {
+            height: 40px;
+            margin: 5px;
+            width: 30px;
+            text-align: center;
         }
 
         #output-wrapper {
@@ -82,7 +89,9 @@
     <div id="overview">This tool uses an english dictionary to brute-force decode any Caesar cypher. Simply put in an encoded string and it will compare the results against a dictionary and return the most likely decryption. After reaching more than 80% confidence during the dictionary lookup it will stop.</div>
     <div id="input-wrapper">
         <textarea id="input">pm ol ohk hufaopun jvumpkluaphs av zhf, ol dyval pa pu jpwoly, aoha pz, if zv johunpun aol vykly vm aol slaalyz vm aol hswohila, aoha uva h dvyk jvbsk il thkl vba.</textarea>
-        <button id="decode" disabled="disabled">Loading</button>
+        <button id="decode" class="button" disabled="disabled">Loading</button>
+        <input id="encodekey" value="" />
+        <button id="encode" class="button" disabled="disabled">Encode</button>
     </div>
     <div id="output-wrapper">
         <div class="row">
@@ -100,6 +109,7 @@
     </div>
     <script>
         var dictionary = [];
+        document.getElementById("encode").addEventListener("click", encodeInput);
         document.addEventListener("DOMContentLoaded", function () {
             var r = new XMLHttpRequest();
             r.open("GET", "https://raw.githubusercontent.com/words/an-array-of-english-words/master/index.json", true);
@@ -112,6 +122,22 @@
                 button.addEventListener("click", readDecodeInput);
             };
             r.send();
+
+            document.getElementById("encodekey").addEventListener("input", event => {
+                let encodeKeyInput = document.getElementById("encodekey");
+                let encodeKey = encodeKeyInput.value.trim();
+                if (!encodeKey) {
+                    let encodeButton = document.getElementById("encode");
+                    encodeButton.disabled = true;
+                    return;
+                }
+                if (encodeKey.length > 1) {
+                    encodeKey = encodeKey.substr(encodeKey.length - 1, 1);
+                    encodeKeyInput.value = encodeKey;
+                }
+                let encodeButton = document.getElementById("encode");
+                encodeButton.disabled = false;
+            });
         });
 
         function containsDictionaryWords(decodedInput) {
@@ -158,7 +184,7 @@
                     bestString = testString;
                 }
             }
-            return { "key": bestKey, "confidence": bestConfidence + "%", "output": bestString };
+            return { key: bestKey, confidence: bestConfidence + "%", output: bestString, encodekey: bestKey };
         }
 
         function readDecodeInput() {
@@ -169,10 +195,44 @@
 
             for (var resultKey in result) {
                 var element = document.getElementById(resultKey);
+                element.value = result[resultKey];
+                element.innerHTML = result[resultKey];
+            }
+            document.getElementById("encode").disabled = false;
+        }
+
+        function encodeInput() {
+            let inputElement = document.getElementById("input");
+            let inputText = inputElement.value.toLowerCase();
+            let encodeKeyInput = document.getElementById("encodekey");
+            let encodeKey = encodeKeyInput.value.trim();
+
+            var asciiBase = 97;
+            var asciiLimit = 123;
+
+            var alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+            var encodeIndex = alphabet.length - alphabet.indexOf(encodeKey);
+
+            let encodedString = "";
+            for (var inputIndex in inputText) {
+
+                if (alphabet.indexOf(inputText[inputIndex]) == -1) {
+                    encodedString += inputText[inputIndex];
+                    continue;
+                }
+                var codeAlphaBase = inputText.charCodeAt(inputIndex) - asciiBase;
+                var charCode = (codeAlphaBase + encodeIndex) % (asciiLimit - asciiBase);
+                encodedString += String.fromCharCode(charCode + asciiBase);
+            }
+
+            let result = { key: encodeKey, confidence: 100 + "%", output: encodedString, encodekey: encodeKey };
+            for (let resultKey in result) {
+                let element = document.getElementById(resultKey);
+                element.value = result[resultKey];
                 element.innerHTML = result[resultKey];
             }
         }
-
 
     </script>
 </body>
